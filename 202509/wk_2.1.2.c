@@ -2,14 +2,12 @@
 
 int main()
 {
-    int price = 0;
+    int a = 0;
+    int b = 0;
 
-    printf("请输入金额（元）：");
-    scanf("%d",&price);
+    scanf("%d %d",&a,&b);
 
-    int change = 100 - price;
-
-    printf("找您%d元。\n", change);
+    printf("%d %d\n",a,b);
 
     return 0;
 }
