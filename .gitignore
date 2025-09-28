@@ -1,0 +1,35 @@
+# ======================================
+# C 语言项目常见忽略文件
+# ======================================
+
+# 1️⃣ 编译生成的二进制文件
+*.o
+*.out
+*.exe
+*.a
+*.so
+*.dll
+*.dylib
+
+# 2️⃣ C 程序编译产物（可执行文件，Mac/Linux）
+wk*
+bin/
+build/
+
+# 3️⃣ 调试信息目录（Mac gcc/clang 会生成）
+*.dSYM/
+*.dSYM/**
+
+# 4️⃣ VS Code 配置和缓存
+.vscode/
+*.code-workspace
+
+# 5️⃣ Mac 系统自动生成的垃圾文件
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# 6️⃣ 备份文件
+*~
+*.swp
+*.swo
