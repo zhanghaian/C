@@ -1,13 +1,13 @@
 #include <stdio.h>
 
 int main() {
-    long a = 0;
-    long b = 0;
-    long sum = 0;
+    long long a = 0;
+    long long  b = 0;
+    long long sum = 0;
 
-    scanf("%ld %ld", &a, &b);
+    scanf("%lld %lld", &a, &b);
     sum = a + b;
-    printf("%ld\n", sum);
+    printf("%lld\n", sum);
 
     return 0;
 }
