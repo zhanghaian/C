@@ -18,7 +18,7 @@ int main() {
             printf("你的数字猜小了。\n");
         }
         } while ( a != number );
-    printf("太好了，你用了%d次就猜到了答案！\n", count);
+    printf("太好了，你用了%d次就猜到了答案\n", count);
     
     return 0;
     }
