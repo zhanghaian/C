@@ -8,14 +8,33 @@
 int main() {
     int n;
     scanf("%d", &n);
-    int a = 1, b, i;
-    for ( i = 1; i <= n; i++ ) {
+    //遍历
+    int i = 1;
+    int a = 1, b = 1;
+    for ( i = 1; i < n ; i++) {
         a *= 10;
-        
+        b *= 10;
     }
-    printf("%d\n", a);
+    b *= 10;
+    while ( a < b ) {
+        int t = a;
+        int sum = 0;
+        do {
+            int d;
+            int p = 1;
+            int j = 1;
+            d = t % 10;
+            t /= 10;
+            for ( j = 1; j <= n; j++) {
+                p  *= d;
+            }
+            sum += p;
+        } while ( t > 0 );
+        if ( sum == a ) {
+            printf("%d\n", a);
+        }
+        a++;
+    }
 
     return 0;
-
 }
-
