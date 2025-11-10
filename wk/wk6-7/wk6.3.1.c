@@ -1,6 +1,6 @@
 #include <stdio.h>
 
-int isPriime ( int i )
+int isPrime ( int i )
 {
     int ret = 1;
     int k;
