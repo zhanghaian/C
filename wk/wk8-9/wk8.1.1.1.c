@@ -14,10 +14,11 @@ int main() {
         scanf("%d", &x);
     }
     if ( cnt > 0 ) {
-        printf("%0.f", sum/cnt);
         int i;
+        double average = sum / cnt;
+        printf("%f\n", average);
         for ( i = 0; i < cnt; i++ ) {
-            if ( number[i] > sum/cnt ) {
+            if ( number[i] > average ) {
                 printf("%d\n", number[i]);
             }
         }
