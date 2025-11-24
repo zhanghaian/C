@@ -8,7 +8,7 @@ int main(void) {
     printf("0x%x\n", &i);
     printf("%p\n", &i);
     printf("%lu\n", sizeof(int));
-    printf("%lu\n", sizeof (int));
+    printf("%lu\n", sizeof (&i));
 
     return 0;
 }
