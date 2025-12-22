@@ -98,9 +98,57 @@ int main() {
                 printf("未知命令\n");
             }
         }
+    }
 
+    return 0;
+}
 
+void trim(char *str) {
+    int i, j = 0;
+    int len = strlen(str);
 
+    for (i = 0; i < len && str[i] == ' '; i++);
+
+    while (i < len) {
+        str[j++] = str[i++];
+    }
+    str[j] = '\0';
+
+    for (i = j - 1; i >= 0 && str[i] == ' '; i--) {
+        str[i] = '\0';
     }
 }
 
+void cmd_open(char *dbname) {
+    trim(dbname);
+    FILE *fp = fopen(dbname, "rb");
+    
+    if (fp) {
+        fread(&db, sizeof(Database), 1, fp);
+        fclose(fp);
+        printf("数据库 '%s' 以打开\n", dbname);
+    } else {
+        strcpy(db.name, dbname);
+        db.table_count = 0;
+        printf("创建新的数据库 '%s'\n", dbname);
+    }
+    db_opened = 1;
+}
+
+void cmd_save(char *dbname) {
+    if (!db_opened) {
+        printf("错误：未打开数据库\n");
+        return;
+    }
+    trim(dbname);
+    FILE *fp = fopen(dbname, "wb");
+    if (fp) {
+        fweite(&db, sizeof(Database), 1, fp);
+        fclose(fp);
+        printf("数据库已保存为 '%s'\n", dbname);
+    } else {
+        printf("错误：无法保存数据、n");
+    }
+}
+
+void cmd_drop
