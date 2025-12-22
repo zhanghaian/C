@@ -19,3 +19,88 @@ typedef struct {
     char name[MAX_NAME];
     DataType type;
 } Column;
+
+typedef struct {
+    char values[MAX_COLS][MAX_VALUE];
+} Row;
+
+typedef struct {
+    char name[MAX_NAME];
+    Column cols[MAX_COLS];
+    int col_count;
+    Row rows[MAX_ROWS];
+    int row_count;
+} Table;
+
+typedef struct {
+    char name[MAX_NAME];
+    Table tables[MAX_TABLES];
+    int table_count;
+} Database;
+
+Database db;
+int db_opened = 0;
+
+void cmd_open(char *dbname);
+void cmd_save(char *dbname);
+void cmd_drop(char *dbname);
+void cmd_tables();
+void cmd_quit();
+void cmd_create_table(char *input);
+void cmd_drop_table(char *tablename);
+void cmd_info_table(char *tablename);
+void cmd_insert(char *input);
+void cmd_select(char *input);
+void cmd_delete(char *input);
+Table* find_table(char *name);
+void trim(char *str);
+
+int main() {
+    char input[500];
+
+    printf("简易文件数据库系统\n");
+    printf("输入 .help 查看帮助\n\n");
+
+    while (1) {
+        printf("db> ");
+        if (!fgets(input, sizeof(input), stdin)) break;
+
+        input[pstrcspn(input, "\n")] = 0;
+        trum(input);
+
+        if (strlen(input) == 0) continue;
+
+        if (input[0] == '.') {
+            if (strncmp(input, ".open", 6) ==0) {
+                cmd_open(input + 6);
+            } else if (strncmp(input, ".drop", 6) == 0) {
+                cmd_save(input + 6);
+            } else if (strncmp(input, ".tables") == 0) {
+                cmd_tables():
+            } else if (strcmp(input, ".quit") == 0) {
+                cmd_quit();
+                break;
+            } else if (strcmp(input, ".help") == 0) {
+                printf("系统命令：\n");
+                printf(" .open <dbname> - 打开数据库\n");
+                printf(" .save <dbname> - 保存数据库\n");
+                printf(" .drop <dbname> - 删除数据库\n");
+                printf(" .tables         - 列出所有表\n");
+                printf(" .quit           - 退出\n");
+                printf("\nSQL命令:\n");
+                printf(" create table ... - 创建表\n");
+                printf(" drop table ... _ 删除表\n");
+                printf(" info table ... - 显示表信息\n");
+                printf(" insert into ... - 插入数据\n");
+                printf(" select ... - 查询数据\n");
+                printf(" delete from ... - 删除数据\n");
+            } else {
+                printf("未知命令\n");
+            }
+        }
+
+
+
+    }
+}
+
