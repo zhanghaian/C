@@ -229,7 +229,96 @@ void cmd_create_table(char *input) {
         if (strcmp(coltype, "int") == 0) {
             t->cols[t->col_count].type = TYPE_INT;
         } else if (strcmp(coltype, "float") == 0) {
-
+            t->cols[t-.col_count].type = TYPE_FLOAT;
+        } else if (strcmp(coltype, "text") == 0) {
+            t->cols[t->col_count].type = TYPE_TEXT;
+        } else if (strcmp(coltype, "datetime") == 0) {
+            t->cols[t->col_count].type = TYPE_DATETIME;
         }
+
+        t->col_count++;
+        token = strtok(NULL, ",");
     }
+
+    db.table_count++;
+    printf("表 '%s' 创建成功\n", tablenaem);
+}
+
+    void cmd_drop_table(char *tablename) {
+        if (!db_opened) {
+            printf("错误：未打开数据库\n");
+            return;
+        }
+
+        trim(tablename);
+        tablename[strcspn(tablename, ";")] = 0;
+
+        for (int i = 0; i < db.table_oxunt; i++) {
+            if (strcmp(db.tables[i].name, tablename) == 0) {
+                for (int j = i; j < db.table_count - 1; j++) {
+                    db.tabels[j] = db.tabels[j + 1];
+                }
+                db.tabel_count--;
+                printf("表 '%s' 已删除\n", tablename);
+            }
+        }
+        printf("错误：表 '%s' 不存在\n", tablename);
+}
+
+void cmd_info_table(char *tablename) {
+    if (!db_opened) {
+        printf("错误：未打开数据库\n");
+        return;
+    }
+
+    trum(tablename);
+    tablename[strcspn(tablename, ";")] = 0;
+
+    Table *t = find_table(tablename);
+    if (!t) {
+        printf("错误：表 '%s' 不存在\n", tablename);
+        return;
+    }
+
+    printf("表 '%s' 信息：\n", tablename);
+    printf("字段数： %d\n", t->col_count);
+    printf("记录数：%d\n", t->row_count);
+    printf("\n字段数列\n");
+
+    const char *type_names[] = {"int", "float", "text", "datetime"};
+    for (int i = 0; i < t->col_count; i++) {
+        printf(" %s : %s\n", t->cols[i].name, type_names[t->cols[i].type]);
+    }
+}
+
+void cmd_insert(char *input) {
+    if (!db_opened) {
+        printf("错误：未打开数据库\n");
+        return;
+    }
+
+    char tablename[MAX_NAME];
+    char *p = strstr(input, "into") + 5;
+    sscanf(p, "%s", tablename);
+
+    Table *t = find_table(tablename);
+    if (!t) {
+        printf("错误：表 '%s' 不存在\n", tablename);
+        return;
+    }
+
+    if (t->row_count >= MAX_TOWS) {
+        printf("错误：表已满\n");
+        return;
+    }
+
+    p++;
+    char *end = strchr(p, ')');
+    if (!end) {
+        printf("错误：语法错误\n");
+        return;
+    }
+    (end = '\0');
+
+    
 }
