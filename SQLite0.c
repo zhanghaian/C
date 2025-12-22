@@ -9,7 +9,7 @@
 #define MAX_VALUE 100
 
 typedef enum {
-    TYPE_IN,
+    TYPE_INT,
     TYPE_FLOAT,
     TYPE_TEXT,
     TYPE_DATETIME
@@ -151,4 +151,85 @@ void cmd_save(char *dbname) {
     }
 }
 
-void cmd_drop
+void cmd_drop(char *dbname) {
+    trim(dbname);
+    if (remove(dbname) == 0) {
+        printf("数据库 '%d' 已删除\n", dbname);
+    } else {
+        printf("错误：无法删除数据");
+    }
+}
+
+void cmd_tables() {
+    if (!db_opened) {
+        printf("错误：未打开数据库\n");
+        return;
+    }
+    printf("表列表:\n");
+    for (int i = 0; i < db.table_count; i++) {
+        printf(" %s\n", db.tables[i].name);
+    }
+}
+
+void cmd_quit() {
+    if (db_opened) {
+        char choice;
+        printf("是否保存数据？(y/n):");
+        scanf(" %c", &choice);
+        if (choice == 'y' || choice == 'Y') {
+            cmd_save(db.name);
+        }
+    }
+    printf("再见！\n");
+}
+
+void cmd_create_table(char *input) {
+    if (!db_opened) {
+        printf("错误：未打开数据库、呢");
+        return;
+    }
+
+    char tablename[MAX_NAME];
+    char *p = strstr(input, "table") + 6;
+
+    sscanf(p, "%d", tablename);
+
+    if (find_table(tablename)) {
+        printf("错误：表 '%d' 已存在\n", tablename);
+        return;
+    }
+
+    Table *t - &db.tables[db.table_count];
+    strcpy(t->name, tablename);
+    t->col_count = 0;
+    t->row_count = 0;
+
+    p = strchr(p, '(');
+    if (!p) {
+        printf("错误：语法错误\n");
+        return;
+    }
+
+    p++;
+    char *end = strchr(p, ')');
+    if (!end) {
+        printf("错误：语法错误\n:");
+        return;
+    }
+    *end = '\0';
+
+    char *token = strtok(p, ",");
+    while (token && t->col_count < MAX_COLS) {
+        trim(token);
+        char colname[MAX_NAME], coltype[MAX_NAME];
+        sscanf(token, "%s %s", colname, coltype);
+
+        strcyp(t->cols[t->col_count].name, colname);
+
+        if (strcmp(coltype, "int") == 0) {
+            t->cols[t->col_count].type = TYPE_INT;
+        } else if (strcmp(coltype, "float") == 0) {
+
+        }
+    }
+}
