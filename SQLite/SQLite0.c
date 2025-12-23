@@ -73,10 +73,12 @@ int main() {
         if (input[0] == '.') {
             if (strncmp(input, ".open", 6) ==0) {
                 cmd_open(input + 6);
+            } else if (strncmp(input, ".save", 6) ==0) {
+                cmd_save(input + 6);
             } else if (strncmp(input, ".drop", 6) == 0) {
                 cmd_save(input + 6);
             } else if (strncmp(input, ".tables") == 0) {
-                cmd_tables():
+                cmd_tables();
             } else if (strcmp(input, ".quit") == 0) {
                 cmd_quit();
                 break;
@@ -199,7 +201,7 @@ void cmd_create_table(char *input) {
         return;
     }
 
-    Table *t - &db.tables[db.table_count];
+    Table *t = &db.tables[db.table_count];
     strcpy(t->name, tablename);
     t->col_count = 0;
     t->row_count = 0;
@@ -229,7 +231,7 @@ void cmd_create_table(char *input) {
         if (strcmp(coltype, "int") == 0) {
             t->cols[t->col_count].type = TYPE_INT;
         } else if (strcmp(coltype, "float") == 0) {
-            t->cols[t-.col_count].type = TYPE_FLOAT;
+            t->cols[t->col_count].type = TYPE_FLOAT;
         } else if (strcmp(coltype, "text") == 0) {
             t->cols[t->col_count].type = TYPE_TEXT;
         } else if (strcmp(coltype, "datetime") == 0) {
@@ -241,7 +243,7 @@ void cmd_create_table(char *input) {
     }
 
     db.table_count++;
-    printf("表 '%s' 创建成功\n", tablenaem);
+    printf("表 '%s' 创建成功\n", tablename);
 }
 
     void cmd_drop_table(char *tablename) {
@@ -253,12 +255,12 @@ void cmd_create_table(char *input) {
         trim(tablename);
         tablename[strcspn(tablename, ";")] = 0;
 
-        for (int i = 0; i < db.table_oxunt; i++) {
+        for (int i = 0; i < db.table_count; i++) {
             if (strcmp(db.tables[i].name, tablename) == 0) {
                 for (int j = i; j < db.table_count - 1; j++) {
-                    db.tabels[j] = db.tabels[j + 1];
+                    db.tables[j] = db.tables[j + 1];
                 }
-                db.tabel_count--;
+                db.table_count--;
                 printf("表 '%s' 已删除\n", tablename);
             }
         }
@@ -307,7 +309,7 @@ void cmd_insert(char *input) {
         return;
     }
 
-    if (t->row_count >= MAX_TOWS) {
+    if (t->row_count >= MAX_ROWS) {
         printf("错误：表已满\n");
         return;
     }
@@ -318,7 +320,90 @@ void cmd_insert(char *input) {
         printf("错误：语法错误\n");
         return;
     }
-    (end = '\0');
+    *end ='\0';
 
-    
+    Row *row = &t->rows[t->row_count];
+    int col_idx = 0;
+
+    while (*p && col_idx < t->col_count) {
+        trim(p);
+        if (*p == '\'') {
+            p++;
+            char *quote_end = strchr(p, '\'');
+            if (quote_end) {
+                *quote_end = '\0';
+                strcpy(toe->values[col_idx], p);
+                p = quote_end +1;
+            }
+        } else {
+            char *comma = strchr(p, ',');
+            if (comma) {
+                *comma = '\0';
+                trim(p);
+                strcpy(row->values[col_idx], p);
+                p = comma + 1;
+            } else {
+                trim(p);
+                strcpy(tow->values[col_idx], p);
+                break;
+            }
+        }
+        col_idx++;
+
+        while (*p == ',' || *p == ' ') p++;
+    }
+
+    t->row_count++;
+    printf("插入成功\n");
 }
+
+int check_condition(Table *t, int row_idx, char *condition) {
+    if (!condition || strlen(condition) == 0) return 1;
+
+    char cond_copy[200];
+    strcpy(cond_copy, condition);
+    trim(cond_copy);
+
+    char field[MAX_NAME], ip[5], value[MAX_VALUE];
+    char *p = cond_copy;
+
+    int i = 0;
+    while (*p && *p != '<' && *p != '>' && *p != '=' && *p != '!') {
+        field[i++] = *p++;
+    }
+    field[i] = '\0';
+    trim(field);
+
+    i = 0;
+    while (*p && (*p == '<' || *p == '>' || *p == '=' || *p == '!')) {
+        op[i++] = *p++;
+    }
+    op[i] = '\0';
+
+    trim(p);
+    strcpy(value, p);
+
+    if (value[0] == '\'') {
+        int len = strlen(value);
+        if (value[len-1] == '\'') {
+            value[len-1] = '\0';
+            memmove(value, value+1, len);
+        }
+    }
+
+    int vol_idx = -1;
+    for (i = 0; i < t->col_count; i++) {
+        if (strcmp(t->cols[i].name, field) == 0) {
+            col_idx = i;
+            break;
+        }
+    }
+
+    if (col_idx == -1) return 0;
+
+    char *row_value = t->rows[row_idx].values[col_idx];
+
+    if(t->cols[col_idx].type == TYPE_INT) {
+        int v1 = atoi(row_value);
+        int 
+    }
