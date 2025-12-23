@@ -391,7 +391,7 @@ int check_condition(Table *t, int row_idx, char *condition) {
         }
     }
 
-    int vol_idx = -1;
+    int col_idx = -1;
     for (i = 0; i < t->col_count; i++) {
         if (strcmp(t->cols[i].name, field) == 0) {
             col_idx = i;
@@ -400,10 +400,58 @@ int check_condition(Table *t, int row_idx, char *condition) {
     }
 
     if (col_idx == -1) return 0;
-
     char *row_value = t->rows[row_idx].values[col_idx];
 
     if(t->cols[col_idx].type == TYPE_INT) {
         int v1 = atoi(row_value);
-        int 
+        int v2 = atoi(balue);
+        
+        if (strcmp(op, "<") == 0) return v1 < v2;
+        if (strcmp(op, ">") == 0) return v1 > v2;
+        if (strcmp(op, "<=") == 0) return v1 <= v2;
+        if (strcmp(op, ">=") == 0) return v1 >= v2;
+        if (strcmp(op, "=") == 0) return v1 == v2;
+        if (strcmp(op, "!=") == 0) return v1 != v2;
+
     }
+    else if (t->cols[col_idx].type == TYPE_FLOAT) {
+        float v1 = atof(row_value);
+        float v2 = atof(value);
+
+        if (strcmp(op, "<") == 0) return v1 < v2;
+        if (strcmp(op, ">") == 0) return v1 > v2;
+        if (strcmp(op, "<=") == 0) return v1 <= v2;
+        if (strcmp(op, ">=") == 0) return v1 >= v2;
+        if (strcmp(op, "=") == 0) return v1 == v2;
+        if (strcmp(op, "!=") == 0) return v1 != v2;
+    }
+    else {
+        int cmp = strcmp(row_value, value);
+
+        if (strcmp(op, "<") == 0) return cmp < 0;
+        if (strcmp(op, ">") == 0) return cmp > 0;
+        if (strcmp(op, "<=") == 0) return cmp <= 0;
+        if (strcmp(op, ">=") == 0) return cmp >= 0;
+        if (strcmp(op, "=") == 0) return cmp == 0;
+        if (strcmp(op, "!=") == 0) return cmp != 0;
+    }
+
+    return 0;
+}
+
+int compare_rows(const void *a, const void *b, Table *t,int col_idx, int desc) {
+    Row *r1 = (Row*)a;
+    Row *r2 = (Row*)b;
+
+    int result = 0;
+
+    if (t->cols[col_idx].type == TYPE_INT) {
+        int v1 = atoi(r1->values[col_idx]);
+        int v2 = atoi(r2->values[col_idx]);
+        result = v1 - v2;
+    }
+    else if (t->cols[col_idx].type == TYPE_FLOAT) {
+        float v1 = atof(r1->values[col_idx]);
+        float v2 = atof(r2->values[col_idx])
+    }
+}
