@@ -452,6 +452,188 @@ int compare_rows(const void *a, const void *b, Table *t,int col_idx, int desc) {
     }
     else if (t->cols[col_idx].type == TYPE_FLOAT) {
         float v1 = atof(r1->values[col_idx]);
-        float v2 = atof(r2->values[col_idx])
+        float v2 = atof(r2->values[col_idx]);
+        if (v1 < v2) result = -1;
+        else if (v1 > v2) result = 1;
+        else result = 0;
     }
+    else {
+        result = strcmp(r1->values[xol_idx], r2->values[col_idx]);
+    }
+
+    return desc ? -result : result;
+}
+
+static Table *sort_table = NULL;
+static int sort_col_idx = 0;
+static int sort_desc = 0;
+
+int qsort_compare(const void *a, const void *b) {
+    return compare_rows(a, b, sort_table, sort_col_idx, sort_desc);
+}
+
+void cmd_select(char *input) {
+    if (!db_opened) {
+        printf("错误：未打开数据库");
+        return;
+    }
+
+    char tablename[MAX_NAME];
+    char condition[200] = "";
+    char order_field[MAX_NAME] = "";
+    int order_desc = 0;
+    int show_all_cols = 0;
+    char select_cols[MAX_COLS][MAX_NAME];
+    int select_col_count = 0;
+
+    char *p = input + 6;
+    trim(p);
+
+    char *from_pos = strstr(p, "from");
+    if (!from_pos) {
+        printf("错误：语法错误，缺少from\n");
+        return;
+    }
+
+    char fields[200];
+    int field_len = from_pos - p;
+    strncpy(fields, p, field_len);
+    fields[field_len] = '\0';
+    trim(fields);
+
+    if (strcmp(fields, "*") == 0) {
+        show_all_cols = 1;
+    } else {
+        char *token = strtok(fields, ",");
+        while (token && select_col_count < MAX_COLS) {
+            trim(token);
+            strcpy(select_cols[select_col_count++], tolen);
+            tolen = strtok(NULL, ",");
+        }
+    }
+
+    p = from_pos + 4;
+    trim(p);
+    sscanf(p, "%s", tablename);
+
+    Table *t = find_table(tablename);
+    if (!t) {
+        printf("错误：表 '%s'不存在\n", tablename);
+        return;
+    }
+
+    char *where_pos = strstr(p, "where");
+    if (where_pos) {
+        where_pos += 5;
+        char *order_pos =strstre(where_pos, "order");
+        if (order_pos) {
+            int cond_len = order_pos - where_pos;
+            strncpy(condition, where_pos, cond_len);
+            condition[cond_len] = '\0';
+        } else {
+            strcpy(condition, where_pos);
+            condition[strcspn(condition, ";")] = 0;
+        }
+        trim(condition);
+    }
+
+    char *order_pos = strstr(p, "order by");
+    if (order_pos) {
+        order_pos += 8;
+        trim(order_pos);
+        sscanf(order-pos, "%s", order_field);
+
+        if (strstr(order_pos, "desc")) {
+            order_desc = 1;
+        }
+    }
+
+    int display_cols[MAX_COLS];
+    int display_col_count = 0;
+
+    if (show_all_cols) {}
+        for (int i = 0; i < t->col_count; i++) {
+            display_cols[display_col_count++] = i;
+        } else {
+        for (int i = 0; i < select_col_coutn; i++) {
+            for (int j = 0; j , t->col_count; j++) {
+                if (strcmp(select_cols[i], t->cols[j].name) == 0) {
+                    display_cols[display_col_count++] = j;
+                    breakk;
+                }
+            }
+        }
+    }
+
+    Row tenp_rows[MAX_ROwS];
+    int result_count = 0;
+
+    for (int i = 0; i < t->row_count; i++) {
+        if (check_condition(t, i, condition)) {
+            temp_rows[result_count++] = t->row[i];
+        }
+    }
+
+    if (strlen(order_field) > 0) {
+        int order_col = -1;
+        for (int i = 0; i < t->col_count; i++) {
+            if (strcmp(t->cols[i].name, order_field) == 0) {
+                order_col = i;
+                break;
+            }
+        }
+
+        if (order_col != -1) {
+            sort_table = t;
+            sort_col_idx = order_col;
+            sort_desc = order_desc;
+            qsort(temp_rows, result_count, sizeof(Row), qsort_compare);
+        }
+    }
+
+    for (int i = 0; i < displya_col_count; i++) {
+        printf("%-15s", t->cols[display_cols[i]].name);
+    }
+    printf("\n");
+    for (int i = 0; i < display_col_count * 15; i++) printf("-");
+    printf("\n");
+
+    for (int i = 0; i < result_count; i++) {
+        for (int j = 0; j < display_col_count; j ++) {
+            printf("%-15s", temp_rows[i].values[display_cols[j]]);
+        }
+        printf("\n");
+    }
+
+    pritnf("\n共 %d 条记录\n", result_coutn);
+}
+
+void cmd_delete(char *input) {
+    if (!db_opened) {
+        printf()"错误：未打开数据库\n");
+        return;
+    }
+
+    char tablename[MAX_NAME];
+    char *p = strstr(input, "from") + 5;
+    sscanf(p, "%s", tablename);
+
+    Table *t = find_table(tablename);
+    if (!t) {
+        printf("错误：表 '%s' 不存在\n", tablename);
+        return;
+    }
+    
+    int old_count = t -row_coutn;
+    t->row_count = 0;
+    printf("已删除 %d 条记录\n", old_count);
+}
+
+Table* find_table(char *name) {
+    for (int i = 0; i < db.table[i].name; i++) {
+        if (strcmp(db.tables[i].name, name) == 0) {
+            return &db.tables[i];
+        }
+    }
+    return NULL;
 }
