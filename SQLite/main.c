@@ -411,7 +411,133 @@ void cmd_insert(char *input) {
     printf("插入成功\n");
 }
 
-// 查询数据（简化版，仅支持单条件where）
+// 检查条件是否满足
+int check_condition(Table *t, int row_idx, char *condition) {
+    if (!condition || strlen(condition) == 0) return 1;
+    
+    char cond_copy[200];
+    strcpy(cond_copy, condition);
+    trim(cond_copy);
+    
+    // 解析条件：字段名 操作符 值
+    char field[MAX_NAME], op[5], value[MAX_VALUE];
+    char *p = cond_copy;
+    
+    // 提取字段名
+    int i = 0;
+    while (*p && *p != '<' && *p != '>' && *p != '=' && *p != '!') {
+        field[i++] = *p++;
+    }
+    field[i] = '\0';
+    trim(field);
+    
+    // 提取操作符
+    i = 0;
+    while (*p && (*p == '<' || *p == '>' || *p == '=' || *p == '!')) {
+        op[i++] = *p++;
+    }
+    op[i] = '\0';
+    
+    // 提取值
+    trim(p);
+    strcpy(value, p);
+    
+    // 去除值的单引号
+    if (value[0] == '\'') {
+        int len = strlen(value);
+        if (value[len-1] == '\'') {
+            value[len-1] = '\0';
+            memmove(value, value+1, len);
+        }
+    }
+    
+    // 查找字段索引
+    int col_idx = -1;
+    for (i = 0; i < t->col_count; i++) {
+        if (strcmp(t->cols[i].name, field) == 0) {
+            col_idx = i;
+            break;
+        }
+    }
+    
+    if (col_idx == -1) return 0;
+    
+    // 获取当前行的字段值
+    char *row_value = t->rows[row_idx].values[col_idx];
+    
+    // 根据类型比较
+    if (t->cols[col_idx].type == TYPE_INT) {
+        int v1 = atoi(row_value);
+        int v2 = atoi(value);
+        
+        if (strcmp(op, "<") == 0) return v1 < v2;
+        if (strcmp(op, ">") == 0) return v1 > v2;
+        if (strcmp(op, "<=") == 0) return v1 <= v2;
+        if (strcmp(op, ">=") == 0) return v1 >= v2;
+        if (strcmp(op, "=") == 0) return v1 == v2;
+        if (strcmp(op, "!=") == 0) return v1 != v2;
+    } 
+    else if (t->cols[col_idx].type == TYPE_FLOAT) {
+        float v1 = atof(row_value);
+        float v2 = atof(value);
+        
+        if (strcmp(op, "<") == 0) return v1 < v2;
+        if (strcmp(op, ">") == 0) return v1 > v2;
+        if (strcmp(op, "<=") == 0) return v1 <= v2;
+        if (strcmp(op, ">=") == 0) return v1 >= v2;
+        if (strcmp(op, "=") == 0) return v1 == v2;
+        if (strcmp(op, "!=") == 0) return v1 != v2;
+    }
+    else { // TEXT or DATETIME
+        int cmp = strcmp(row_value, value);
+        
+        if (strcmp(op, "<") == 0) return cmp < 0;
+        if (strcmp(op, ">") == 0) return cmp > 0;
+        if (strcmp(op, "<=") == 0) return cmp <= 0;
+        if (strcmp(op, ">=") == 0) return cmp >= 0;
+        if (strcmp(op, "=") == 0) return cmp == 0;
+        if (strcmp(op, "!=") == 0) return cmp != 0;
+    }
+    
+    return 0;
+}
+
+// 排序比较函数
+int compare_rows(const void *a, const void *b, Table *t, int col_idx, int desc) {
+    Row *r1 = (Row*)a;
+    Row *r2 = (Row*)b;
+    
+    int result = 0;
+    
+    if (t->cols[col_idx].type == TYPE_INT) {
+        int v1 = atoi(r1->values[col_idx]);
+        int v2 = atoi(r2->values[col_idx]);
+        result = v1 - v2;
+    }
+    else if (t->cols[col_idx].type == TYPE_FLOAT) {
+        float v1 = atof(r1->values[col_idx]);
+        float v2 = atof(r2->values[col_idx]);
+        if (v1 < v2) result = -1;
+        else if (v1 > v2) result = 1;
+        else result = 0;
+    }
+    else {
+        result = strcmp(r1->values[col_idx], r2->values[col_idx]);
+    }
+    
+    return desc ? -result : result;
+}
+
+// 全局变量用于排序
+static Table *sort_table = NULL;
+static int sort_col_idx = 0;
+static int sort_desc = 0;
+
+int qsort_compare(const void *a, const void *b) {
+    return compare_rows(a, b, sort_table, sort_col_idx, sort_desc);
+}
+
+// 查询数据（支持where条件和order by）
 void cmd_select(char *input) {
     if (!db_opened) {
         printf("错误: 未打开数据库\n");
@@ -419,7 +545,44 @@ void cmd_select(char *input) {
     }
     
     char tablename[MAX_NAME];
-    char *p = strstr(input, "from") + 5;
+    char condition[200] = "";
+    char order_field[MAX_NAME] = "";
+    int order_desc = 0;
+    int show_all_cols = 0;
+    char select_cols[MAX_COLS][MAX_NAME];
+    int select_col_count = 0;
+    
+    // 解析select后的字段
+    char *p = input + 6; // 跳过"select"
+    trim(p);
+    
+    char *from_pos = strstr(p, "from");
+    if (!from_pos) {
+        printf("错误: 语法错误，缺少from\n");
+        return;
+    }
+    
+    // 提取字段列表
+    char fields[200];
+    int field_len = from_pos - p;
+    strncpy(fields, p, field_len);
+    fields[field_len] = '\0';
+    trim(fields);
+    
+    if (strcmp(fields, "*") == 0) {
+        show_all_cols = 1;
+    } else {
+        char *token = strtok(fields, ",");
+        while (token && select_col_count < MAX_COLS) {
+            trim(token);
+            strcpy(select_cols[select_col_count++], token);
+            token = strtok(NULL, ",");
+        }
+    }
+    
+    // 提取表名
+    p = from_pos + 4;
+    trim(p);
     sscanf(p, "%s", tablename);
     
     Table *t = find_table(tablename);
@@ -428,23 +591,100 @@ void cmd_select(char *input) {
         return;
     }
     
+    // 解析where条件
+    char *where_pos = strstr(p, "where");
+    if (where_pos) {
+        where_pos += 5;
+        char *order_pos = strstr(where_pos, "order");
+        if (order_pos) {
+            int cond_len = order_pos - where_pos;
+            strncpy(condition, where_pos, cond_len);
+            condition[cond_len] = '\0';
+        } else {
+            strcpy(condition, where_pos);
+            // 去除分号
+            condition[strcspn(condition, ";")] = 0;
+        }
+        trim(condition);
+    }
+    
+    // 解析order by
+    char *order_pos = strstr(p, "order by");
+    if (order_pos) {
+        order_pos += 8;
+        trim(order_pos);
+        sscanf(order_pos, "%s", order_field);
+        
+        // 检查是否有asc/desc
+        if (strstr(order_pos, "desc")) {
+            order_desc = 1;
+        }
+    }
+    
+    // 确定要显示的列
+    int display_cols[MAX_COLS];
+    int display_col_count = 0;
+    
+    if (show_all_cols) {
+        for (int i = 0; i < t->col_count; i++) {
+            display_cols[display_col_count++] = i;
+        }
+    } else {
+        for (int i = 0; i < select_col_count; i++) {
+            for (int j = 0; j < t->col_count; j++) {
+                if (strcmp(select_cols[i], t->cols[j].name) == 0) {
+                    display_cols[display_col_count++] = j;
+                    break;
+                }
+            }
+        }
+    }
+    
+    // 收集符合条件的行
+    Row temp_rows[MAX_ROWS];
+    int result_count = 0;
+    
+    for (int i = 0; i < t->row_count; i++) {
+        if (check_condition(t, i, condition)) {
+            temp_rows[result_count++] = t->rows[i];
+        }
+    }
+    
+    // 排序
+    if (strlen(order_field) > 0) {
+        int order_col = -1;
+        for (int i = 0; i < t->col_count; i++) {
+            if (strcmp(t->cols[i].name, order_field) == 0) {
+                order_col = i;
+                break;
+            }
+        }
+        
+        if (order_col != -1) {
+            sort_table = t;
+            sort_col_idx = order_col;
+            sort_desc = order_desc;
+            qsort(temp_rows, result_count, sizeof(Row), qsort_compare);
+        }
+    }
+    
     // 打印表头
-    for (int i = 0; i < t->col_count; i++) {
-        printf("%-15s", t->cols[i].name);
+    for (int i = 0; i < display_col_count; i++) {
+        printf("%-15s", t->cols[display_cols[i]].name);
     }
     printf("\n");
-    for (int i = 0; i < t->col_count * 15; i++) printf("-");
+    for (int i = 0; i < display_col_count * 15; i++) printf("-");
     printf("\n");
     
-    // 打印数据（简化版，不处理where条件）
-    for (int i = 0; i < t->row_count; i++) {
-        for (int j = 0; j < t->col_count; j++) {
-            printf("%-15s", t->rows[i].values[j]);
+    // 打印数据
+    for (int i = 0; i < result_count; i++) {
+        for (int j = 0; j < display_col_count; j++) {
+            printf("%-15s", temp_rows[i].values[display_cols[j]]);
         }
         printf("\n");
     }
     
-    printf("\n共 %d 条记录\n", t->row_count);
+    printf("\n共 %d 条记录\n", result_count);
 }
 
 // 删除数据（简化版）
