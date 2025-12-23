@@ -65,8 +65,8 @@ int main() {
         printf("db> ");
         if (!fgets(input, sizeof(input), stdin)) break;
 
-        input[pstrcspn(input, "\n")] = 0;
-        trum(input);
+        input[strcspn(input, "\n")] = 0;
+        trim(input);
 
         if (strlen(input) == 0) continue;
 
@@ -76,8 +76,8 @@ int main() {
             } else if (strncmp(input, ".save", 6) ==0) {
                 cmd_save(input + 6);
             } else if (strncmp(input, ".drop", 6) == 0) {
-                cmd_save(input + 6);
-            } else if (strncmp(input, ".tables") == 0) {
+                cmd_dropf(input + 6);
+            } else if (strcmp(input, ".tables") == 0) {
                 cmd_tables();
             } else if (strcmp(input, ".quit") == 0) {
                 cmd_quit();
@@ -145,20 +145,20 @@ void cmd_save(char *dbname) {
     trim(dbname);
     FILE *fp = fopen(dbname, "wb");
     if (fp) {
-        fweite(&db, sizeof(Database), 1, fp);
+        fwrite(&db, sizeof(Database), 1, fp);
         fclose(fp);
         printf("数据库已保存为 '%s'\n", dbname);
     } else {
-        printf("错误：无法保存数据、n");
+        printf("错误：无法保存数据\n");
     }
 }
 
 void cmd_drop(char *dbname) {
     trim(dbname);
     if (remove(dbname) == 0) {
-        printf("数据库 '%d' 已删除\n", dbname);
+        printf("数据库 '%s' 已删除\n", dbname);
     } else {
-        printf("错误：无法删除数据");
+        printf("错误：无法删除数据\n");
     }
 }
 
@@ -187,17 +187,17 @@ void cmd_quit() {
 
 void cmd_create_table(char *input) {
     if (!db_opened) {
-        printf("错误：未打开数据库、呢");
+        printf("错误：未打开数据库\n");
         return;
     }
 
     char tablename[MAX_NAME];
     char *p = strstr(input, "table") + 6;
 
-    sscanf(p, "%d", tablename);
+    sscanf(p, "%s", tablename);
 
     if (find_table(tablename)) {
-        printf("错误：表 '%d' 已存在\n", tablename);
+        printf("错误：表 '%s' 已存在\n", tablename);
         return;
     }
 
@@ -215,7 +215,7 @@ void cmd_create_table(char *input) {
     p++;
     char *end = strchr(p, ')');
     if (!end) {
-        printf("错误：语法错误\n:");
+        printf("错误：语法错误\n");
         return;
     }
     *end = '\0';
@@ -226,7 +226,7 @@ void cmd_create_table(char *input) {
         char colname[MAX_NAME], coltype[MAX_NAME];
         sscanf(token, "%s %s", colname, coltype);
 
-        strcyp(t->cols[t->col_count].name, colname);
+        strcpy(t->cols[t->col_count].name, colname);
 
         if (strcmp(coltype, "int") == 0) {
             t->cols[t->col_count].type = TYPE_INT;
@@ -262,6 +262,7 @@ void cmd_create_table(char *input) {
                 }
                 db.table_count--;
                 printf("表 '%s' 已删除\n", tablename);
+                return;
             }
         }
         printf("错误：表 '%s' 不存在\n", tablename);
@@ -273,7 +274,7 @@ void cmd_info_table(char *tablename) {
         return;
     }
 
-    trum(tablename);
+    trim(tablename);
     tablename[strcspn(tablename, ";")] = 0;
 
     Table *t = find_table(tablename);
@@ -332,7 +333,7 @@ void cmd_insert(char *input) {
             char *quote_end = strchr(p, '\'');
             if (quote_end) {
                 *quote_end = '\0';
-                strcpy(toe->values[col_idx], p);
+                strcpy(row->values[col_idx], p);
                 p = quote_end +1;
             }
         } else {
@@ -344,7 +345,7 @@ void cmd_insert(char *input) {
                 p = comma + 1;
             } else {
                 trim(p);
-                strcpy(tow->values[col_idx], p);
+                strcpy(row->values[col_idx], p);
                 break;
             }
         }
@@ -364,7 +365,7 @@ int check_condition(Table *t, int row_idx, char *condition) {
     strcpy(cond_copy, condition);
     trim(cond_copy);
 
-    char field[MAX_NAME], ip[5], value[MAX_VALUE];
+    char field[MAX_NAME], op[5], value[MAX_VALUE];
     char *p = cond_copy;
 
     int i = 0;
@@ -404,7 +405,7 @@ int check_condition(Table *t, int row_idx, char *condition) {
 
     if(t->cols[col_idx].type == TYPE_INT) {
         int v1 = atoi(row_value);
-        int v2 = atoi(balue);
+        int v2 = atoi(value);
         
         if (strcmp(op, "<") == 0) return v1 < v2;
         if (strcmp(op, ">") == 0) return v1 > v2;
@@ -458,7 +459,7 @@ int compare_rows(const void *a, const void *b, Table *t,int col_idx, int desc) {
         else result = 0;
     }
     else {
-        result = strcmp(r1->values[xol_idx], r2->values[col_idx]);
+        result = strcmp(r1->values[col_idx], r2->values[col_idx]);
     }
 
     return desc ? -result : result;
@@ -474,7 +475,7 @@ int qsort_compare(const void *a, const void *b) {
 
 void cmd_select(char *input) {
     if (!db_opened) {
-        printf("错误：未打开数据库");
+        printf("错误：未打开数据库\n");
         return;
     }
 
@@ -507,8 +508,8 @@ void cmd_select(char *input) {
         char *token = strtok(fields, ",");
         while (token && select_col_count < MAX_COLS) {
             trim(token);
-            strcpy(select_cols[select_col_count++], tolen);
-            tolen = strtok(NULL, ",");
+            strcpy(select_cols[select_col_count++], token);
+            token = strtok(NULL, ",");
         }
     }
 
@@ -525,7 +526,7 @@ void cmd_select(char *input) {
     char *where_pos = strstr(p, "where");
     if (where_pos) {
         where_pos += 5;
-        char *order_pos =strstre(where_pos, "order");
+        char *order_pos =strstr(where_pos, "order");
         if (order_pos) {
             int cond_len = order_pos - where_pos;
             strncpy(condition, where_pos, cond_len);
@@ -541,7 +542,7 @@ void cmd_select(char *input) {
     if (order_pos) {
         order_pos += 8;
         trim(order_pos);
-        sscanf(order-pos, "%s", order_field);
+        sscanf(order_pos, "%s", order_field);
 
         if (strstr(order_pos, "desc")) {
             order_desc = 1;
@@ -551,26 +552,27 @@ void cmd_select(char *input) {
     int display_cols[MAX_COLS];
     int display_col_count = 0;
 
-    if (show_all_cols) {}
+    if (show_all_cols) {
         for (int i = 0; i < t->col_count; i++) {
             display_cols[display_col_count++] = i;
-        } else {
-        for (int i = 0; i < select_col_coutn; i++) {
-            for (int j = 0; j , t->col_count; j++) {
+        } 
+    } else {
+        for (int i = 0; i < select_col_count; i++) {
+            for (int j = 0; j < t->col_count; j++) {
                 if (strcmp(select_cols[i], t->cols[j].name) == 0) {
                     display_cols[display_col_count++] = j;
-                    breakk;
+                    break;
                 }
             }
         }
     }
 
-    Row tenp_rows[MAX_ROwS];
+    Row temp_rows[MAX_ROWS];
     int result_count = 0;
 
     for (int i = 0; i < t->row_count; i++) {
         if (check_condition(t, i, condition)) {
-            temp_rows[result_count++] = t->row[i];
+            temp_rows[result_count++] = t->rows[i];
         }
     }
 
@@ -591,7 +593,7 @@ void cmd_select(char *input) {
         }
     }
 
-    for (int i = 0; i < displya_col_count; i++) {
+    for (int i = 0; i < display_col_count; i++) {
         printf("%-15s", t->cols[display_cols[i]].name);
     }
     printf("\n");
@@ -605,12 +607,12 @@ void cmd_select(char *input) {
         printf("\n");
     }
 
-    pritnf("\n共 %d 条记录\n", result_coutn);
+    pritnf("\n共 %d 条记录\n", result_count);
 }
 
 void cmd_delete(char *input) {
     if (!db_opened) {
-        printf()"错误：未打开数据库\n");
+        printf("错误：未打开数据库\n");
         return;
     }
 
@@ -624,13 +626,13 @@ void cmd_delete(char *input) {
         return;
     }
     
-    int old_count = t -row_coutn;
+    int old_count = t ->row_count;
     t->row_count = 0;
     printf("已删除 %d 条记录\n", old_count);
 }
 
 Table* find_table(char *name) {
-    for (int i = 0; i < db.table[i].name; i++) {
+    for (int i = 0; i < db.table_count; i++) {
         if (strcmp(db.tables[i].name, name) == 0) {
             return &db.tables[i];
         }
