@@ -76,7 +76,7 @@ int main() {
             } else if (strncmp(input, ".save", 6) ==0) {
                 cmd_save(input + 6);
             } else if (strncmp(input, ".drop", 6) == 0) {
-                cmd_dropf(input + 6);
+                cmd_drop(input + 6);
             } else if (strcmp(input, ".tables") == 0) {
                 cmd_tables();
             } else if (strcmp(input, ".quit") == 0) {
@@ -84,26 +84,40 @@ int main() {
                 break;
             } else if (strcmp(input, ".help") == 0) {
                 printf("系统命令：\n");
-                printf(" .open <dbname> - 打开数据库\n");
-                printf(" .save <dbname> - 保存数据库\n");
-                printf(" .drop <dbname> - 删除数据库\n");
+                printf(" .open <dbname>  - 打开数据库\n");
+                printf(" .save <dbname>  - 保存数据库\n");
+                printf(" .drop <dbname>  - 删除数据库\n");
                 printf(" .tables         - 列出所有表\n");
                 printf(" .quit           - 退出\n");
                 printf("\nSQL命令:\n");
                 printf(" create table ... - 创建表\n");
-                printf(" drop table ... _ 删除表\n");
-                printf(" info table ... - 显示表信息\n");
-                printf(" insert into ... - 插入数据\n");
-                printf(" select ... - 查询数据\n");
-                printf(" delete from ... - 删除数据\n");
+                printf(" drop table ...   - 删除表\n");
+                printf(" info table ...   - 显示表信息\n");
+                printf(" insert into ...  - 插入数据\n");
+                printf(" select ...       - 查询数据\n");
+                printf(" delete from ...  - 删除数据\n");
             } else {
                 printf("未知命令\n");
             }
         }
+        else if (strncmp(input, "create table", 12) == 0 ) {
+            cmd_create_table(input);
+        } else if (strncmp(input, "drop table", 10) == 0) {
+            cmd_drop_table(input + 11);
+        } else if (strncmp(input, "info table", 10) == 0) {
+            cmd_info_table(input + 11);
+        } else if (strncmp(input, "insert into", 11) == 0) {
+            cmd_insert(input);
+        } else if (strncmp(input, "select", 6) == 0) {
+            cmd_select(input);
+        } else if (strncmp(input, "delete from", 11) == 0) {
+            cmd_delete(input);
+        } else {
+            printf("未知SQL命令\n");
+        }
     }
 
-    return 0;
-}
+    return 0;}
 
 void trim(char *str) {
     int i, j = 0;
@@ -607,7 +621,7 @@ void cmd_select(char *input) {
         printf("\n");
     }
 
-    pritnf("\n共 %d 条记录\n", result_count);
+    printf("\n共 %d 条记录\n", result_count);
 }
 
 void cmd_delete(char *input) {
