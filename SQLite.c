@@ -71,11 +71,11 @@ int main() {
         if (strlen(input) == 0) continue;
 
         if (input[0] == '.') {
-            if (strncmp(input, ".open", 6) ==0) {
+            if (strncmp(input, ".open ", 6) ==0) {
                 cmd_open(input + 6);
-            } else if (strncmp(input, ".save", 6) ==0) {
+            } else if (strncmp(input, ".save ", 6) ==0) {
                 cmd_save(input + 6);
-            } else if (strncmp(input, ".drop", 6) == 0) {
+            } else if (strncmp(input, ".drop ", 6) == 0) {
                 cmd_drop(input + 6);
             } else if (strcmp(input, ".tables") == 0) {
                 cmd_tables();
@@ -260,26 +260,26 @@ void cmd_create_table(char *input) {
     printf("表 '%s' 创建成功\n", tablename);
 }
 
-    void cmd_drop_table(char *tablename) {
-        if (!db_opened) {
-            printf("错误：未打开数据库\n");
+void cmd_drop_table(char *tablename) {
+    if (!db_opened) {
+        printf("错误：未打开数据库\n");
+        return;
+    }
+
+    trim(tablename);
+    tablename[strcspn(tablename, ";")] = 0;
+
+    for (int i = 0; i < db.table_count; i++) {
+        if (strcmp(db.tables[i].name, tablename) == 0) {
+            for (int j = i; j < db.table_count - 1; j++) {
+                db.tables[j] = db.tables[j + 1];
+            }
+            db.table_count--;
+            printf("表 '%s' 已删除\n", tablename);
             return;
         }
-
-        trim(tablename);
-        tablename[strcspn(tablename, ";")] = 0;
-
-        for (int i = 0; i < db.table_count; i++) {
-            if (strcmp(db.tables[i].name, tablename) == 0) {
-                for (int j = i; j < db.table_count - 1; j++) {
-                    db.tables[j] = db.tables[j + 1];
-                }
-                db.table_count--;
-                printf("表 '%s' 已删除\n", tablename);
-                return;
-            }
-        }
-        printf("错误：表 '%s' 不存在\n", tablename);
+    }
+    printf("错误：表 '%s' 不存在\n", tablename);
 }
 
 void cmd_info_table(char *tablename) {
@@ -298,13 +298,13 @@ void cmd_info_table(char *tablename) {
     }
 
     printf("表 '%s' 信息：\n", tablename);
-    printf("字段数： %d\n", t->col_count);
+    printf("字段数：%d\n", t->col_count);
     printf("记录数：%d\n", t->row_count);
     printf("\n字段数列\n");
 
     const char *type_names[] = {"int", "float", "text", "datetime"};
     for (int i = 0; i < t->col_count; i++) {
-        printf(" %s : %s\n", t->cols[i].name, type_names[t->cols[i].type]);
+        printf("  %s : %s\n", t->cols[i].name, type_names[t->cols[i].type]);
     }
 }
 
@@ -326,6 +326,12 @@ void cmd_insert(char *input) {
 
     if (t->row_count >= MAX_ROWS) {
         printf("错误：表已满\n");
+        return;
+    }
+
+    p = strchr(p, '(');
+    if (!p) {
+        printf("错误：语法错误\n");
         return;
     }
 
