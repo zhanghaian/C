@@ -1,14 +1,19 @@
 #include <stdio.h>
 
+int main()
+{
+    int n;
+    scanf("%d",&n);
 
-void sort4(int a[]) {
-    for (int i = 0; i < 3; i++) {
-        for (int j = 0; j < 3 - i; j++) {
-            if (a[j] < a[j+1]) {
-                int temp = a[j];
-                a[j] = a[j+1];
-                a[j+1] = temp;
-            }
-        }
-    }
+    double f[50];
+
+    f[0]=0;
+    f[1]=1;
+
+    for(int i=2;i<=n;i++)
+        f[i]=f[i-1]+f[i-2];
+
+    printf("%.2f",f[n]);
+
+    return 0;
 }
