@@ -1,19 +1,33 @@
 #include <stdio.h>
 
-int main()
-{
-    int n;
-    scanf("%d",&n);
+int main() {
+    int n, m;
+    scanf("%d %d", &n, &m);
 
-    double f[50];
+    int a[1000] = {0}; // 0表示未出列，1表示已出列
+    int count = 0;     // 当前报数
+    int num = 0;       // 已出列人数
+    int i = 0;         // 当前下标
 
-    f[0]=0;
-    f[1]=1;
+    while (num < n - 1) {
+        if (a[i] == 0) { // 没出列才报数
+            count++;
+            if (count == m) {
+                a[i] = 1; // 出列
+                printf("%d ", i + 1);
+                count = 0;
+                num++;
+            }
+        }
+        i = (i + 1) % n; // 循环
+    }
 
-    for(int i=2;i<=n;i++)
-        f[i]=f[i-1]+f[i-2];
-
-    printf("%.2f",f[n]);
+    // 找最后一个人
+    for (i = 0; i < n; i++) {
+        if (a[i] == 0) {
+            printf("\nLast: %d\n", i + 1);
+        }
+    }
 
     return 0;
 }

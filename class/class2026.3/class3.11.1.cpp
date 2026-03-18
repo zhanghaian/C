@@ -17,17 +17,18 @@ int main( ) {
     L = new LNode;
     L->next = nullptr;
 
-    for (int i = 0; i < 10; ++i) 
+    for (int i = 0; i < 10; ++i) {
         insertList (L, i + 1, (i + 1) * 10);
+    }
 
-        LNode *p = L->next;
-        while (p) {
-            cout << p ->data << " ";
-            p = p->next;
-        }
-        cout << endl;
+    LNode *p = L->next;
+    while (p) {
+        cout << p ->data << " ";
+        p = p->next;
+    }
+    cout << endl;
         
-        return 0;
+    return 0;
    
 }
 
