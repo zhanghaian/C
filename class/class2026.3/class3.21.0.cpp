@@ -2,25 +2,22 @@
 #include <stdlib.h>
 
 typedef int ElemType;
-
-// 结点定义
+//定义
 typedef struct Node {
     ElemType data;
     struct Node *next;
 } Node, *LinkList;
 
-// 初始化链表（带头结点）
 void InitList(LinkList *L) {
     *L = (LinkList)malloc(sizeof(Node));
     (*L)->next = NULL;
 }
 
-// 插入：在第i个位置插入元素e
+//插入元素
 int Insert(LinkList L, int i, ElemType e) {
     Node *p = L;
     int j = 0;
 
-    // 找到第i-1个位置
     while (p && j < i - 1) {
         p = p->next;
         j++;
@@ -37,12 +34,11 @@ int Insert(LinkList L, int i, ElemType e) {
     return 1;
 }
 
-// 删除：删除第i个元素
+//删除元素
 int Delete(LinkList L, int i) {
     Node *p = L;
     int j = 0;
 
-    // 找到第i-1个位置
     while (p->next && j < i - 1) {
         p = p->next;
         j++;
@@ -57,7 +53,7 @@ int Delete(LinkList L, int i) {
     return 1;
 }
 
-// 遍历输出
+//遍历输出
 void Traverse(LinkList L) {
     Node *p = L->next;
 
@@ -74,22 +70,18 @@ void Traverse(LinkList L) {
     printf("\n");
 }
 
-// 主函数
 int main() {
     LinkList L;
     InitList(&L);
 
     int x;
 
-    // 输入（0结束）
     while (scanf("%d", &x) && x != 0) {
-        Insert(L, 1, x);  // 每次插入到第1个位置（头插法）
+        Insert(L, 1, x);
     }
 
-    // 第一次输出
     Traverse(L);
 
-    // 每次删除第1个元素并输出
     while (L->next) {
         Delete(L, 1);
         Traverse(L);
